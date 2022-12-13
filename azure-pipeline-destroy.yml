@@ -1,0 +1,48 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+trigger: none
+
+pool:
+  vmImage: ubuntu-latest
+
+stages:
+  - stage: tfdestroy
+    jobs:
+      - job: destroy
+        steps:
+          - task: TerraformInstaller@0
+            displayName: tfinstall
+            inputs:
+              terraformVersion: 'latest'
+          - task: TerraformTaskV3@3
+            displayName: init
+            inputs:
+              provider: 'azurerm'
+              command: 'init'
+              backendServiceArm: 'azure_subscription(3a4a2a22-b370-425a-b18b-fcb708518ae6)'
+              backendAzureRmResourceGroupName: 'rg-travis'
+              backendAzureRmStorageAccountName: 'furkanstorageaccount'
+              backendAzureRmContainerName: 'terraform-state-file'
+              backendAzureRmKey: 'terraform.tfstate'
+          - task: TerraformTaskV3@3
+            displayName: validate
+            inputs:
+              provider: 'azurerm'
+              command: 'validate'
+          - task: TerraformTaskV3@3
+            displayName: plan
+            inputs:
+              provider: 'azurerm'
+              command: 'plan'
+              environmentServiceNameAzureRM: 'azure_subscription(3a4a2a22-b370-425a-b18b-fcb708518ae6)'
+          - task: TerraformTaskV3@3
+            displayName: destroy
+            inputs:
+              provider: 'azurerm'
+              command: 'destroy'
+              commandOptions: '-auto-approve'
+              environmentServiceNameAzureRM: 'azure_subscription(3a4a2a22-b370-425a-b18b-fcb708518ae6)'
+
